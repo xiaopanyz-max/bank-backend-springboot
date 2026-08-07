@@ -1,0 +1,48 @@
+{
+  "info": {
+    "_postman_id": "93875a6f-2feb-4c3a-88e2-9e7014a9f5bc",
+    "name": "Bank Backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Customer",
+      "item": [
+        {
+          "name": "Create customer",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Response status is 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "if (body.data) pm.environment.set('customerId', body.data);"
+            ] }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"customerNo\": \"CUST-001\",\n  \"name\": \"Postman Test Customer\",\n  \"phone\": \"13800138000\",\n  \"email\": \"postman@example.com\"\n}" },
+            "url": "{{baseUrl}}/api/customers"
+          }
+        },
+        {
+          "name": "Get customer detail",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/customers/{{customerId}}" }
+        },
+        {
+          "name": "Search customers (page)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"pageNo\": 1,\n  \"pageSize\": 10,\n  \"keyword\": \"Postman\"\n}" },
+            "url": "{{baseUrl}}/api/customers/page"
+          }
+        }
+      ]
+    },
+    {
+      "name": "OpenAPI JSON",
+      "request": { "method": "GET", "url": "{{baseUrl}}/v3/api-docs" }
+    }
+  ]
+}

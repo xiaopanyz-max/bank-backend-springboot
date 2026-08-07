@@ -1,0 +1,79 @@
+spring:
+  application:
+    name: customer-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
+    openfeign:
+      circuitbreaker:
+        enabled: true
+      client:
+        config:
+          account-service:
+            connectTimeout: 1000
+            readTimeout: 2000
+  profiles:
+    active: dev
+  jackson:
+    time-zone: Asia/Shanghai
+    date-format: yyyy-MM-dd HH:mm:ss
+  mvc:
+    problemdetails:
+      # 关闭 Spring 默认 Problem Details，让 GlobalExceptionHandler 统一返回友好错误信息。
+      enabled: false
+  sql:
+    init:
+      mode: never
+rocketmq:
+  name-server: ${ROCKETMQ_NAMESRV:127.0.0.1:9876}
+  producer:
+    group: customer-service-producer
+    send-message-timeout: 5000
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+  global-config:
+    banner: false
+    db-config:
+      id-type: assign_id
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 2s
+
+outbox:
+  publish-delay: 5s
+
+# Springdoc 的 UI Starter 会自动暴露默认地址，无需显式配置：
+# - Swagger UI: /swagger-ui/index.html
+# - OpenAPI JSON: /v3/api-docs
+# 如需修改上述默认路径时，再取消注释并配置 springdoc。
+# springdoc:
+#   api-docs:
+#     path: /v3/api-docs
+#   swagger-ui:
+#     path: /swagger-ui/index.html

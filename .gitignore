@@ -1,0 +1,28 @@
+# IDE and operating-system files
+.idea/
+.run/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Build outputs and runtime data
+**/target/
+logs/
+work/
+*.log
+derby.log
+
+# Local credentials and overrides
+.env
+.env.*
+!.env.example
+application-local.yml
+application-local.yaml
+application-local.properties
+*-local.yml
+*-local.yaml
+*-local.properties
+
+# Test tools and temporary files
+*.jtl
+*.tmp
