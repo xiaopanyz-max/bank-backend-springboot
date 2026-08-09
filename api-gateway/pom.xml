@@ -52,4 +52,14 @@
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Repackage the thin Maven JAR as an executable Spring Boot JAR for Docker. -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 </project>
