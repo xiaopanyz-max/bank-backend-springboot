@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rocketmq-nameserver
+  namespace: bank
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rocketmq-nameserver
+  template:
+    metadata:
+      labels:
+        app: rocketmq-nameserver
+    spec:
+      containers:
+        - name: nameserver
+          image: apache/rocketmq:5.3.2
+          command: ["sh", "mqnamesrv"]
+          ports:
+            - containerPort: 9876
+          readinessProbe:
+            tcpSocket:
+              port: 9876
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rocketmq-nameserver
+  namespace: bank
+spec:
+  selector:
+    app: rocketmq-nameserver
+  ports:
+    - port: 9876
+      targetPort: 9876
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rocketmq-broker
+  namespace: bank
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rocketmq-broker
+  template:
+    metadata:
+      labels:
+        app: rocketmq-broker
+    spec:
+      containers:
+        - name: broker
+          image: apache/rocketmq:5.3.2
+          command: ["sh", "mqbroker"]
+          args: ["--enable-proxy"]
+          env:
+            - name: NAMESRV_ADDR
+              value: rocketmq-nameserver:9876
+          ports:
+            - containerPort: 10911
+            - containerPort: 10909
+            - containerPort: 10912
+          volumeMounts:
+            - name: data
+              mountPath: /home/rocketmq/store
+          readinessProbe:
+            tcpSocket:
+              port: 10911
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              memory: 2Gi
+      volumes:
+        - name: data
+          hostPath:
+            path: /var/lib/bank-k8s/rocketmq
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rocketmq-broker
+  namespace: bank
+spec:
+  selector:
+    app: rocketmq-broker
+  ports:
+    - name: remoting
+      port: 10911
+      targetPort: 10911
