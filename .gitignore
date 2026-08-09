@@ -14,6 +14,9 @@ derby.log
 
 # Local credentials and overrides
 .env
+k8s/config/secret.yaml
+k8s/infra/mysql-windows-setup.sql
+k8s/infra/run-mysql-windows-setup.cmd
 .env.*
 !.env.example
 application-local.yml
