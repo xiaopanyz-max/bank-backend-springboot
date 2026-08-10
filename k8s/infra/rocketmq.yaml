@@ -62,7 +62,9 @@ spec:
         - name: broker
           image: apache/rocketmq:5.3.2
           command: ["sh", "mqbroker"]
-          args: ["--enable-proxy"]
+          # The Spring RocketMQ client uses the Broker remoting protocol directly.
+          # Keep this local learning deployment to a Broker only; the optional Proxy
+          # requires extra configuration and is unnecessary here.
           env:
             - name: NAMESRV_ADDR
               value: rocketmq-nameserver:9876
@@ -77,6 +79,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /home/rocketmq/store
+            - name: logs
+              mountPath: /home/rocketmq/logs
           readinessProbe:
             tcpSocket:
               port: 10911
@@ -92,6 +96,10 @@ spec:
         - name: data
           hostPath:
             path: /var/lib/bank-k8s/rocketmq
+            type: DirectoryOrCreate
+        - name: logs
+          hostPath:
+            path: /var/log/bank-k8s/rocketmq
             type: DirectoryOrCreate
 ---
 apiVersion: v1
