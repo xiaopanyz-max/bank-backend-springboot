@@ -66,6 +66,10 @@ spec:
           env:
             - name: NAMESRV_ADDR
               value: rocketmq-nameserver:9876
+            # RocketMQ's stock Broker startup script defaults to an 8 GiB heap.
+            # Override it for this 8 GiB single-node learning VM.
+            - name: JAVA_OPT_EXT
+              value: "-Xms256m -Xmx256m -Xmn128m -XX:MaxDirectMemorySize=256m -XX:-AlwaysPreTouch"
           ports:
             - containerPort: 10911
             - containerPort: 10909
@@ -80,10 +84,10 @@ spec:
             periodSeconds: 10
           resources:
             requests:
-              cpu: 500m
-              memory: 1Gi
+              cpu: 250m
+              memory: 512Mi
             limits:
-              memory: 2Gi
+              memory: 768Mi
       volumes:
         - name: data
           hostPath:
