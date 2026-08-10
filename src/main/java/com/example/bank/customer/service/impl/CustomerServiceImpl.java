@@ -12,7 +12,9 @@ import com.example.bank.customer.mapper.CustomerMapStructMapper;
 import com.example.bank.customer.mapper.CustomerMapper;
 import com.example.bank.customer.service.CustomerService;
 import com.example.bank.customer.vo.CustomerVO;
-import com.example.bank.customer.outbox.CustomerOutboxService;
+import com.example.bank.transaction.client.AccountServiceClient;
+import com.example.bank.transaction.client.CreateAccountRequest;
+import java.math.BigDecimal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,12 +23,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, CustomerEntity> implements CustomerService {
 
     private final CustomerMapStructMapper customerMapStructMapper;
-    private final CustomerOutboxService customerOutboxService;
+    private final AccountServiceClient accountServiceClient;
 
     public CustomerServiceImpl(CustomerMapStructMapper customerMapStructMapper,
-                               CustomerOutboxService customerOutboxService) {
+                               AccountServiceClient accountServiceClient) {
         this.customerMapStructMapper = customerMapStructMapper;
-        this.customerOutboxService = customerOutboxService;
+        this.accountServiceClient = accountServiceClient;
     }
 
     @Override
@@ -40,9 +42,9 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, CustomerEnt
         }
         CustomerEntity entity = customerMapStructMapper.toEntity(dto);
         entity.setStatus(1);
-        entity.setAccountOpenStatus("PENDING");
+        entity.setAccountOpenStatus("ACTIVE");
         save(entity);
-        customerOutboxService.recordAccountOpenRequested(entity.getId(), entity.getCustomerNo());
+        accountServiceClient.createAccount(new CreateAccountRequest(entity.getCustomerNo(), BigDecimal.ZERO));
         return entity.getId();
     }
 

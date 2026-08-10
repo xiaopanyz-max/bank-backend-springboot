@@ -27,12 +27,6 @@ spring:
   sql:
     init:
       mode: never
-rocketmq:
-  name-server: ${ROCKETMQ_NAMESRV:127.0.0.1:9876}
-  producer:
-    group: customer-service-producer
-    send-message-timeout: 5000
-
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
@@ -64,9 +58,6 @@ resilience4j:
     configs:
       default:
         timeoutDuration: 2s
-
-outbox:
-  publish-delay: 5s
 
 # Springdoc 的 UI Starter 会自动暴露默认地址，无需显式配置：
 # - Swagger UI: /swagger-ui/index.html

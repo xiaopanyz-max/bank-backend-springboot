@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.UUID;
 import java.util.Optional;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
@@ -21,10 +20,6 @@ public class AccountRepository {
 
     /** Inserts an account with a temporary unique number and returns its database-generated ID. */
     public Long create(String customerNo, BigDecimal initialBalance) {
-        return create(customerNo, initialBalance, null);
-    }
-
-    public Long create(String customerNo, BigDecimal initialBalance, String sourceEventId) {
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement statement = connection.prepareStatement(
@@ -32,7 +27,7 @@ public class AccountRepository {
                     Statement.RETURN_GENERATED_KEYS);
             statement.setString(1, customerNo);
             statement.setString(2, "PENDING-" + UUID.randomUUID());
-            statement.setString(3, sourceEventId);
+            statement.setNull(3, java.sql.Types.CHAR);
             statement.setBigDecimal(4, initialBalance);
             return statement;
         }, keyHolder);
@@ -42,12 +37,6 @@ public class AccountRepository {
             throw new IllegalStateException("Account database did not return a generated ID");
         }
         return generatedId.longValue();
-    }
-
-    public Optional<Long> findAccountIdBySourceEventId(String sourceEventId) {
-        return jdbcTemplate.query("SELECT id FROM t_account WHERE source_event_id = ?", (rs, rowNum) -> rs.getLong("id"), sourceEventId)
-                .stream()
-                .findFirst();
     }
 
     public Optional<BigDecimal> findBalance(Long accountId) {

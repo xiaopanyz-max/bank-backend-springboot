@@ -20,12 +20,6 @@ spring:
       port: ${REDIS_PORT:6379}
       connect-timeout: 1s
       timeout: 1s
-rocketmq:
-  name-server: ${ROCKETMQ_NAMESRV:127.0.0.1:9876}
-  producer:
-    group: account-service-producer
-    send-message-timeout: 5000
-
 account:
   cache-ttl: 5m
 

@@ -49,25 +49,6 @@ public class AccountService {
         return new AccountCreatedResponse(accountId, accountNo, initialBalance);
     }
 
-    /** Handles a retriable RocketMQ command. sourceEventId makes duplicate delivery safe. */
-    @Transactional
-    public AccountCreatedResponse createAccountFromEvent(String sourceEventId, String customerNo, BigDecimal initialBalance) {
-        return accountRepository.findAccountIdBySourceEventId(sourceEventId)
-                .map(existingId -> new AccountCreatedResponse(existingId, null, getBalance(existingId).balance()))
-                .orElseGet(() -> {
-                    BigDecimal balance = initialBalance == null ? BigDecimal.ZERO : initialBalance;
-                    Long accountId;
-                    try {
-                        accountId = accountRepository.create(customerNo, balance, sourceEventId);
-                    } catch (org.springframework.dao.DuplicateKeyException ex) {
-                        Long existingId = accountRepository.findAccountIdBySourceEventId(sourceEventId).orElseThrow(() -> ex);
-                        return new AccountCreatedResponse(existingId, null, getBalance(existingId).balance());
-                    }
-                    String accountNo = accountRepository.assignAccountNo(accountId);
-                    return new AccountCreatedResponse(accountId, accountNo, balance);
-                });
-    }
-
     /** Reads Redis first and falls back to MySQL on a cache miss or Redis outage. */
     public AccountBalanceResponse getBalance(Long accountId) {
         String cacheKey = cacheKey(accountId);

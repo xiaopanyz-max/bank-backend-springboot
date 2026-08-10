@@ -23,7 +23,7 @@ Kubernetes：拉取镜像并启动业务服务
   ├── customer-service：客户业务
   ├── account-service：账户业务
   ├── Nacos：注册与发现
-  ├── RocketMQ：异步消息
+  ├── RocketMQ：预留给未来异步业务；当前开户不使用它
   └── mysql（只是名称映射）→ Windows MySQL
 ~~~
 
@@ -128,7 +128,7 @@ Pod → mysql:3306 → 192.168.30.1:3306 → 127.0.0.1:3306 → Windows MySQL
 2. database/schema.sql：创建客户库表。
 3. account-service/database/schema.sql：创建账户库表。
 
-目的：每个服务有自己的库，K8S 使用专用账号而不是 root。  
+目的：每个服务有自己的库，K8S 使用专用账号而不是 root；当前开户经 Feign 同步调用账户服务。
 成功标志：出现 bank_dev、bank_account 和对应表。
 
 ### 4.2 NAT 端口转发
@@ -238,7 +238,7 @@ kubectl get pods -n bank -w
 目的：
 
 - 第一条创建数据库密码 Secret。
-- 第二条 Kustomize 一次发布 namespace、ConfigMap、Windows MySQL 名称映射、Nacos、RocketMQ、三个业务服务。
+- 第二条 Kustomize 一次发布 namespace、ConfigMap、Windows MySQL 名称映射、Nacos、RocketMQ 基础设施、三个业务服务。RocketMQ 当前不参与开户。
 - 第三条持续观察 Pod 状态。
 
 成功标志：bank 命名空间内所有 Pod 为 Running，READY 列等于容器总数。
