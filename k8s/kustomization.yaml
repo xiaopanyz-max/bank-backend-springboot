@@ -9,3 +9,13 @@ resources:
   - apps/customer-service.yaml
   - apps/account-service.yaml
   - apps/api-gateway.yaml
+
+# These tags are changed only by the CI deployment job.  A fixed tag makes a
+# Git change visible to Argo CD and gives every deployed version a traceable ID.
+images:
+  - name: ghcr.io/xiaopanyz-max/bank-customer-service
+    newTag: sha-f4f45e5d8d1e68518a65d1151917fab649722494
+  - name: ghcr.io/xiaopanyz-max/bank-account-service
+    newTag: sha-f4f45e5d8d1e68518a65d1151917fab649722494
+  - name: ghcr.io/xiaopanyz-max/bank-api-gateway
+    newTag: sha-f4f45e5d8d1e68518a65d1151917fab649722494

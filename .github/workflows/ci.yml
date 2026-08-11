@@ -3,6 +3,10 @@ name: CI and publish images
 on:
   push:
     branches: [main]
+    # The deployment job commits only this file. Argo CD handles that commit,
+    # so it must not trigger another image build loop.
+    paths-ignore:
+      - k8s/kustomization.yaml
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -82,3 +86,33 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:sha-${{ github.sha }}
             ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:latest
+
+  update-deployment-manifest:
+    name: Update GitOps image versions
+    needs: [test, publish-images]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set immutable image tags in Kustomize
+        env:
+          IMAGE_TAG: sha-${{ github.sha }}
+        run: |
+          sed -i -E "s#(newTag: )sha-[a-f0-9]+#\\1${IMAGE_TAG}#" k8s/kustomization.yaml
+          grep -F "newTag: ${IMAGE_TAG}" k8s/kustomization.yaml
+      - name: Commit deployment version
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add k8s/kustomization.yaml
+          if git diff --cached --quiet; then
+            echo "Deployment manifest is already current."
+            exit 0
+          fi
+          git commit -m "chore(cd): deploy ${GITHUB_SHA} [skip ci]"
+          git push
