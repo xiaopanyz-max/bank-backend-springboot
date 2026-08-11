@@ -3,6 +3,8 @@ name: CI and publish images
 on:
   push:
     branches: [main]
+    # A release is created by pushing an annotated Git tag such as v1.0.0.
+    tags: ["v*"]
     # The deployment job commits only this file. Argo CD handles that commit,
     # so it must not trigger another image build loop.
     paths-ignore:
@@ -45,7 +47,7 @@ jobs:
     name: Build and publish ${{ matrix.service }} image
     needs: test
     # Pull requests only validate code. A successful main push publishes deployable images.
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -85,7 +87,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:sha-${{ github.sha }}
-            ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:latest
+            ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:${{ github.ref == 'refs/heads/main' && 'latest' || github.ref_name }}
 
   update-deployment-manifest:
     name: Update GitOps image versions
