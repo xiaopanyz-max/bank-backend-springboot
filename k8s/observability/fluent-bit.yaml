@@ -54,7 +54,7 @@ data:
         Tag               kube.*
         Path              /var/log/containers/*_bank_*.log
         Parser            cri
-        DB                /var/log/flb_kube_bank.db
+        DB                /tmp/flb_kube_bank.db
         Mem_Buf_Limit     20MB
         Skip_Long_Lines   On
         Refresh_Interval  10
