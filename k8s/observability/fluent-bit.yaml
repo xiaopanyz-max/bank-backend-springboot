@@ -71,6 +71,14 @@ data:
         Labels              On
         Annotations         Off
 
+    [FILTER]
+        Name                parser
+        Match               kube.*
+        Key_Name            log
+        Parser              spring_log_level
+        Reserve_Data        On
+        Preserve_Key        On
+
     [OUTPUT]
         Name                es
         Match               kube.*
@@ -89,6 +97,11 @@ data:
         Regex       ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<log>.*)$
         Time_Key    time
         Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+
+    [PARSER]
+        Name        spring_log_level
+        Format      regex
+        Regex       ^(?<app_time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})\s+\[(?<thread>[^\]]+)\]\s+(?<log_level>TRACE|DEBUG|INFO|WARN|ERROR)\s+(?<logger>[^ ]+)\s+-\s+(?<message>.*)$
 ---
 apiVersion: apps/v1
 kind: DaemonSet
