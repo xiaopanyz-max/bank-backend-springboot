@@ -13,14 +13,19 @@ import com.example.bank.customer.mapper.CustomerMapper;
 import com.example.bank.customer.service.CustomerService;
 import com.example.bank.customer.vo.CustomerVO;
 import com.example.bank.transaction.client.AccountServiceClient;
+import com.example.bank.transaction.client.AccountCreatedResponse;
 import com.example.bank.transaction.client.CreateAccountRequest;
 import java.math.BigDecimal;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /** Customer service implementation. */
 @Service
 public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, CustomerEntity> implements CustomerService {
+
+    private static final Logger log = LoggerFactory.getLogger(CustomerServiceImpl.class);
 
     private final CustomerMapStructMapper customerMapStructMapper;
     private final AccountServiceClient accountServiceClient;
@@ -34,6 +39,7 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, CustomerEnt
     @Override
     @Transactional
     public Long create(CustomerCreateDTO dto) {
+        log.info("customer create requested customerNo={} name={}", dto.getCustomerNo(), dto.getName());
         boolean customerNoExists = lambdaQuery()
                 .eq(CustomerEntity::getCustomerNo, dto.getCustomerNo())
                 .exists();
@@ -44,7 +50,12 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, CustomerEnt
         entity.setStatus(1);
         entity.setAccountOpenStatus("ACTIVE");
         save(entity);
-        accountServiceClient.createAccount(new CreateAccountRequest(entity.getCustomerNo(), BigDecimal.ZERO));
+        log.info("customer saved id={} customerNo={} accountOpenStatus={}",
+                entity.getId(), entity.getCustomerNo(), entity.getAccountOpenStatus());
+        AccountCreatedResponse account = accountServiceClient.createAccount(
+                new CreateAccountRequest(entity.getCustomerNo(), BigDecimal.ZERO));
+        log.info("customer account opened customerId={} customerNo={} accountId={} accountNo={}",
+                entity.getId(), entity.getCustomerNo(), account.accountId(), account.accountNo());
         return entity.getId();
     }
 

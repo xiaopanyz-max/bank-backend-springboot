@@ -46,6 +46,8 @@ public class AccountService {
         }
         Long accountId = accountRepository.create(request.customerNo(), initialBalance);
         String accountNo = accountRepository.assignAccountNo(accountId);
+        log.info("account created customerNo={} accountId={} accountNo={} initialBalance={}",
+                request.customerNo(), accountId, accountNo, initialBalance);
         return new AccountCreatedResponse(accountId, accountNo, initialBalance);
     }
 
@@ -55,6 +57,7 @@ public class AccountService {
         try {
             String cachedBalance = redisTemplate.opsForValue().get(cacheKey);
             if (cachedBalance != null) {
+                log.info("account balance cache hit accountId={} cacheKey={}", accountId, cacheKey);
                 return new AccountBalanceResponse(accountId, new BigDecimal(cachedBalance), "CACHE");
             }
         } catch (DataAccessException ex) {
@@ -64,6 +67,7 @@ public class AccountService {
         BigDecimal balance = accountRepository.findBalance(accountId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
         putCache(cacheKey, balance);
+        log.info("account balance loaded accountId={} source=DATABASE", accountId);
         return new AccountBalanceResponse(accountId, balance, "DATABASE");
     }
 
@@ -75,6 +79,7 @@ public class AccountService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found");
         }
         putCache(cacheKey(accountId), balance);
+        log.info("account balance updated accountId={} balance={}", accountId, balance);
         return new AccountBalanceResponse(accountId, balance, "DATABASE");
     }
 
