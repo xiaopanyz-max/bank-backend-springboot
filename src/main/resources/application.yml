@@ -68,3 +68,17 @@ resilience4j:
 #     path: /v3/api-docs
 #   swagger-ui:
 #     path: /swagger-ui/index.html
+
+rocketmq:
+  name-server: ${ROCKETMQ_NAME_SERVER:127.0.0.1:9876}
+  producer:
+    group: ${ROCKETMQ_PRODUCER_GROUP:customer-service-producer}
+
+bank:
+  sms:
+    # 本地 IDEA 默认关闭，避免没启动 RocketMQ 时影响 customer-service 启动。
+    # K8S 里通过 ConfigMap 设置 SMS_MQ_ENABLED=true 后启用。
+    mq-enabled: ${SMS_MQ_ENABLED:false}
+    topic: ${SMS_TOPIC:bank-sms-topic}
+    account-opened-tag: ${SMS_ACCOUNT_OPENED_TAG:ACCOUNT_OPENED}
+    consumer-group: ${SMS_CONSUMER_GROUP:customer-service-sms-consumer}

@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS t_sms_message (
+    id BIGINT NOT NULL,
+    message_id VARCHAR(64) NOT NULL,
+    customer_no VARCHAR(64) NOT NULL,
+    account_no VARCHAR(64) NULL,
+    phone VARCHAR(20) NOT NULL,
+    scene VARCHAR(64) NOT NULL,
+    content VARCHAR(500) NOT NULL,
+    status VARCHAR(32) NOT NULL DEFAULT 'INIT',
+    retry_count INT NOT NULL DEFAULT 0,
+    fail_reason VARCHAR(500) NULL,
+    sent_at DATETIME(3) NULL,
+    create_time DATETIME(3) NULL,
+    update_time DATETIME(3) NULL,
+    creator BIGINT NULL,
+    updater BIGINT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_sms_message_id (message_id),
+    KEY idx_sms_customer_no (customer_no),
+    KEY idx_sms_status (status),
+    KEY idx_sms_scene (scene)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

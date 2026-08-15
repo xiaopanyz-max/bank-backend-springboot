@@ -2,6 +2,7 @@ package com.example.bank;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 @SpringBootApplication
 @EnableFeignClients
 @EnableDiscoveryClient
+@ConfigurationPropertiesScan
 public class BankBackendApplication {
 
     private static final Logger log = LoggerFactory.getLogger(BankBackendApplication.class);

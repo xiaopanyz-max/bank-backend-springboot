@@ -8,9 +8,12 @@ import com.example.bank.common.page.PageResult;
 import com.example.bank.customer.dto.CustomerCreateDTO;
 import com.example.bank.customer.dto.CustomerPageQueryDTO;
 import com.example.bank.customer.entity.CustomerEntity;
+import com.example.bank.customer.entity.SmsMessageEntity;
 import com.example.bank.customer.mapper.CustomerMapStructMapper;
 import com.example.bank.customer.mapper.CustomerMapper;
+import com.example.bank.customer.mq.SmsMessagePublisher;
 import com.example.bank.customer.service.CustomerService;
+import com.example.bank.customer.service.SmsMessageService;
 import com.example.bank.customer.vo.CustomerVO;
 import com.example.bank.transaction.client.AccountServiceClient;
 import com.example.bank.transaction.client.AccountCreatedResponse;
@@ -29,11 +32,17 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, CustomerEnt
 
     private final CustomerMapStructMapper customerMapStructMapper;
     private final AccountServiceClient accountServiceClient;
+    private final SmsMessageService smsMessageService;
+    private final SmsMessagePublisher smsMessagePublisher;
 
     public CustomerServiceImpl(CustomerMapStructMapper customerMapStructMapper,
-                               AccountServiceClient accountServiceClient) {
+                               AccountServiceClient accountServiceClient,
+                               SmsMessageService smsMessageService,
+                               SmsMessagePublisher smsMessagePublisher) {
         this.customerMapStructMapper = customerMapStructMapper;
         this.accountServiceClient = accountServiceClient;
+        this.smsMessageService = smsMessageService;
+        this.smsMessagePublisher = smsMessagePublisher;
     }
 
     @Override
@@ -56,6 +65,10 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, CustomerEnt
                 new CreateAccountRequest(entity.getCustomerNo(), BigDecimal.ZERO));
         log.info("customer account opened customerId={} customerNo={} accountId={} accountNo={}",
                 entity.getId(), entity.getCustomerNo(), account.accountId(), account.accountNo());
+        SmsMessageEntity smsMessage = smsMessageService.createAccountOpenedMessage(entity, account);
+        smsMessagePublisher.publishAfterCommit(smsMessage);
+        log.info("account opened sms message recorded messageId={} customerNo={} accountNo={} phone={}",
+                smsMessage.getMessageId(), entity.getCustomerNo(), account.accountNo(), maskPhone(entity.getPhone()));
         return entity.getId();
     }
 
@@ -91,5 +104,12 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, CustomerEnt
                         .map(customerMapStructMapper::toVO)
                         .toList()
         );
+    }
+
+    private String maskPhone(String phone) {
+        if (phone == null || phone.length() < 7) {
+            return "unknown";
+        }
+        return phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4);
     }
 }

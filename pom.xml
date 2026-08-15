@@ -26,6 +26,7 @@
         <lombok.version>1.18.36</lombok.version>
         <spring-cloud.version>2025.0.0</spring-cloud.version>
         <spring-cloud-alibaba.version>2025.0.0.0</spring-cloud-alibaba.version>
+        <rocketmq-spring.version>2.3.6</rocketmq-spring.version>
     </properties>
 
     <dependencyManagement>
@@ -75,6 +76,11 @@
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-spring-boot-starter</artifactId>
+            <version>${rocketmq-spring.version}</version>
         </dependency>
         <dependency>
             <groupId>com.baomidou</groupId>
