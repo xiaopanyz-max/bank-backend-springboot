@@ -16,7 +16,7 @@ spec:
       containers:
         - name: nameserver
           image: apache/rocketmq:4.9.7
-          command: ["sh", "mqnamesrv"]
+          command: ["sh", "-c", "NAMESRV_BIN=$(find /home/rocketmq -path '*/bin/mqnamesrv' -type f | head -1); echo using $NAMESRV_BIN; sh $NAMESRV_BIN"]
           ports:
             - containerPort: 9876
           readinessProbe:
@@ -86,7 +86,7 @@ spec:
       containers:
         - name: broker
           image: apache/rocketmq:4.9.7
-          command: ["sh", "-c", "mqbroker -c /home/rocketmq/conf/broker.conf"]
+          command: ["sh", "-c", "BROKER_BIN=$(find /home/rocketmq -path '*/bin/mqbroker' -type f | head -1); echo using $BROKER_BIN; sh $BROKER_BIN -c /home/rocketmq/conf/broker.conf"]
           # The Spring RocketMQ client uses the Broker remoting protocol directly.
           # Keep this local learning deployment to a Broker only; the optional Proxy
           # requires extra configuration and is unnecessary here.
@@ -104,7 +104,7 @@ spec:
           lifecycle:
             preStop:
               exec:
-                command: ["sh", "-c", "mqshutdown broker || true"]
+                command: ["sh", "-c", "SHUTDOWN_BIN=$(find /home/rocketmq -path '*/bin/mqshutdown' -type f | head -1); if [ -n \"$SHUTDOWN_BIN\" ]; then sh $SHUTDOWN_BIN broker; fi"]
           volumeMounts:
             - name: broker-config
               mountPath: /home/rocketmq/conf/broker.conf
