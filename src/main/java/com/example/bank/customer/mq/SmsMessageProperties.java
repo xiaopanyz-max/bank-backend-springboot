@@ -10,6 +10,7 @@ public class SmsMessageProperties {
     private String topic = "bank-sms-topic";
     private String accountOpenedTag = "ACCOUNT_OPENED";
     private String consumerGroup = "customer-service-sms-consumer";
+    private int maxRetryCount = 3;
 
     public boolean isMqEnabled() {
         return mqEnabled;
@@ -45,5 +46,13 @@ public class SmsMessageProperties {
 
     public String accountOpenedDestination() {
         return topic + ":" + accountOpenedTag;
+    }
+
+    public int getMaxRetryCount() {
+        return maxRetryCount;
+    }
+
+    public void setMaxRetryCount(int maxRetryCount) {
+        this.maxRetryCount = maxRetryCount;
     }
 }

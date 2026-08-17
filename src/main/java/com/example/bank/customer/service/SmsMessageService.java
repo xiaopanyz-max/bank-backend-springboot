@@ -10,9 +10,15 @@ public interface SmsMessageService extends IService<SmsMessageEntity> {
 
     SmsMessageEntity createAccountOpenedMessage(CustomerEntity customer, AccountCreatedResponse account);
 
+    SmsMessageEntity findByMessageId(String messageId);
+
+    boolean shouldSkipConsumedMessage(String messageId);
+
+    void markMqSent(String messageId);
+
     void markSending(String messageId);
 
     void markSent(String messageId);
 
-    void markFailed(String messageId, String failReason);
+    boolean markFailedAndShouldRetry(String messageId, String failReason);
 }

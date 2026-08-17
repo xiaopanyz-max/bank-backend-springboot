@@ -75,6 +75,10 @@ rocketmq:
     group: ${ROCKETMQ_PRODUCER_GROUP:customer-service-producer}
 
 bank:
+  idempotency:
+    # Controller 层入口幂等：Controller 方法标记 @ApsIdempotent，且请求 DTO 继承 BaseRequestDTO 时生效。
+    retention-days: ${IDEMPOTENCY_RETENTION_DAYS:7}
+    cleanup-cron: ${IDEMPOTENCY_CLEANUP_CRON:0 */30 * * * *}
   sms:
     # 本地 IDEA 默认关闭，避免没启动 RocketMQ 时影响 customer-service 启动。
     # K8S 里通过 ConfigMap 设置 SMS_MQ_ENABLED=true 后启用。
@@ -82,3 +86,4 @@ bank:
     topic: ${SMS_TOPIC:bank-sms-topic}
     account-opened-tag: ${SMS_ACCOUNT_OPENED_TAG:ACCOUNT_OPENED}
     consumer-group: ${SMS_CONSUMER_GROUP:customer-service-sms-consumer}
+    max-retry-count: ${SMS_MAX_RETRY_COUNT:3}

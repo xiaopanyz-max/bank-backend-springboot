@@ -12,3 +12,4 @@ data:
   SMS_TOPIC: bank-sms-topic
   SMS_ACCOUNT_OPENED_TAG: ACCOUNT_OPENED
   SMS_CONSUMER_GROUP: customer-service-sms-consumer
+  SMS_MAX_RETRY_COUNT: "3"

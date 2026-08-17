@@ -1,6 +1,7 @@
 package com.example.bank.customer.mq;
 
 import com.example.bank.customer.entity.SmsMessageEntity;
+import com.example.bank.customer.service.SmsMessageService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
@@ -21,13 +22,16 @@ public class RocketMqSmsMessagePublisher implements SmsMessagePublisher {
     private final RocketMQTemplate rocketMQTemplate;
     private final ObjectMapper objectMapper;
     private final SmsMessageProperties properties;
+    private final SmsMessageService smsMessageService;
 
     public RocketMqSmsMessagePublisher(RocketMQTemplate rocketMQTemplate,
                                        ObjectMapper objectMapper,
-                                       SmsMessageProperties properties) {
+                                       SmsMessageProperties properties,
+                                       SmsMessageService smsMessageService) {
         this.rocketMQTemplate = rocketMQTemplate;
         this.objectMapper = objectMapper;
         this.properties = properties;
+        this.smsMessageService = smsMessageService;
     }
 
     @Override
@@ -57,6 +61,7 @@ public class RocketMqSmsMessagePublisher implements SmsMessagePublisher {
             String payload = objectMapper.writeValueAsString(event);
             String destination = properties.accountOpenedDestination();
             rocketMQTemplate.syncSend(destination, payload);
+            smsMessageService.markMqSent(message.getMessageId());
             log.info("sms mq message published messageId={} destination={} customerNo={} accountNo={}",
                     message.getMessageId(), destination, message.getCustomerNo(), message.getAccountNo());
         } catch (JsonProcessingException ex) {

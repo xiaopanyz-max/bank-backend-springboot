@@ -36,6 +36,10 @@ public class SmsSendRequestedConsumer implements RocketMQListener<String> {
             event = objectMapper.readValue(payload, SmsSendRequestedEvent.class);
             log.info("sms mq message consumed messageId={} customerNo={} accountNo={} scene={}",
                     event.messageId(), event.customerNo(), event.accountNo(), event.scene());
+            if (smsMessageService.shouldSkipConsumedMessage(event.messageId())) {
+                log.info("sms mq message skipped messageId={} reason=already-finished-or-missing", event.messageId());
+                return;
+            }
             smsMessageService.markSending(event.messageId());
             simulateSmsSend(event);
             smsMessageService.markSent(event.messageId());
@@ -45,7 +49,11 @@ public class SmsSendRequestedConsumer implements RocketMQListener<String> {
             String messageId = event == null ? "unknown" : event.messageId();
             log.error("sms send mock failed messageId={} reason={}", messageId, ex.getMessage(), ex);
             if (event != null) {
-                smsMessageService.markFailed(event.messageId(), ex.getMessage());
+                boolean shouldRetry = smsMessageService.markFailedAndShouldRetry(event.messageId(), ex.getMessage());
+                if (!shouldRetry) {
+                    log.error("sms send reached final failure messageId={} max retry exhausted", event.messageId());
+                    return;
+                }
             }
             throw new IllegalStateException("SMS send failed, RocketMQ should retry this message", ex);
         }

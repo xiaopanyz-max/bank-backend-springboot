@@ -25,6 +25,11 @@ public class AccountServiceClientFallbackFactory implements FallbackFactory<Acco
             public AccountBalanceResponse getBalance(Long accountId) {
                 throw new ServiceUnavailableException("账户服务暂不可用，请稍后重试", cause);
             }
+
+            @Override
+            public AccountBalanceResponse updateBalance(Long accountId, UpdateAccountBalanceRequest request) {
+                throw new ServiceUnavailableException("账户服务暂不可用，请稍后重试", cause);
+            }
         };
     }
 }
