@@ -1,15 +1,18 @@
 package com.example.bank.customer.dto;
 
+import com.example.bank.common.dto.BaseRequestDTO;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * 客户新增入参。
  */
 @Data
-public class CustomerCreateDTO {
+@EqualsAndHashCode(callSuper = true)
+public class CustomerCreateDTO extends BaseRequestDTO {
 
     @NotBlank(message = "客户编号不能为空")
     private String customerNo;

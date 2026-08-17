@@ -137,6 +137,9 @@ public class IdempotentRequestAspect {
         if (data == null) {
             return fallback;
         }
+        if (data instanceof CharSequence || data instanceof Number) {
+            return data.toString();
+        }
         try {
             Method method = data.getClass().getMethod("transactionNo");
             Object value = method.invoke(data);

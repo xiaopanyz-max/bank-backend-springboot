@@ -1,10 +1,12 @@
 package com.example.bank.customer.controller;
 
 import com.example.bank.common.page.PageResult;
+import com.example.bank.common.idempotency.annotation.ApsIdempotent;
 import com.example.bank.common.result.Result;
 import com.example.bank.customer.dto.CustomerCreateDTO;
 import com.example.bank.customer.dto.CustomerPageQueryDTO;
 import com.example.bank.customer.service.CustomerService;
+import com.example.bank.customer.service.impl.CustomerCreateIdempotentResultResolver;
 import com.example.bank.customer.vo.CustomerVO;
 import jakarta.validation.Valid;
 import org.springframework.validation.annotation.Validated;
@@ -28,6 +30,7 @@ public class CustomerController {
         this.customerService = customerService;
     }
 
+    @ApsIdempotent(businessType = CustomerCreateIdempotentResultResolver.BUSINESS_TYPE)
     @PostMapping
     public Result<Long> create(@Valid @RequestBody CustomerCreateDTO dto) {
         return Result.success(customerService.create(dto));
