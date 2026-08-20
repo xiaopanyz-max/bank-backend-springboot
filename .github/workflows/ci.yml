@@ -5,10 +5,6 @@ on:
     branches: [main]
     # A release is created by pushing an annotated Git tag such as v1.0.0.
     tags: ["v*"]
-    # The deployment job commits only this file. Argo CD handles that commit,
-    # so it must not trigger another image build loop.
-    paths-ignore:
-      - k8s/kustomization.yaml
   pull_request:
     branches: [main]
   release:
@@ -103,20 +99,32 @@ jobs:
     if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))) || github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     steps:
-      - name: Check out source
+      - name: Validate GitOps repository token
+        env:
+          GITOPS_REPO_TOKEN: ${{ secrets.GITOPS_REPO_TOKEN }}
+        run: |
+          if [ -z "${GITOPS_REPO_TOKEN}" ]; then
+            echo "::error::Missing GITOPS_REPO_TOKEN. Create a GitHub token with contents:write access to xiaopanyz-max/bank-backend-gitops and add it as an Actions secret in this repository."
+            exit 1
+          fi
+      - name: Check out GitOps repository
         uses: actions/checkout@v6
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: xiaopanyz-max/bank-backend-gitops
+          token: ${{ secrets.GITOPS_REPO_TOKEN }}
           ref: main
+          path: gitops
       - name: Set deployment image tags in Kustomize
+        working-directory: gitops
         env:
           IMAGE_TAG: ${{ (github.event_name == 'release' && github.event.release.tag_name) || (github.event_name == 'workflow_dispatch' && inputs.release_tag) || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && github.ref_name) || format('sha-{0}', github.sha) }}
         run: |
           sed -i -E "s#(newTag: ).*#\\1${IMAGE_TAG}#" k8s/kustomization.yaml
           grep -F "newTag: ${IMAGE_TAG}" k8s/kustomization.yaml
       - name: Commit deployment version
+        working-directory: gitops
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
