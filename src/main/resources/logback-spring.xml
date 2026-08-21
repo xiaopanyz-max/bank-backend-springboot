@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <springProperty name="APP_NAME" source="spring.application.name" defaultValue="bank-backend-springboot"/>
+    <springProperty name="ROOT_LOG_LEVEL" source="logging.level.root" defaultValue="INFO"/>
+    <springProperty name="BANK_LOG_LEVEL" source="logging.level.com.example.bank" defaultValue="INFO"/>
     <property name="LOG_PATH" value="logs"/>
     <property name="CONSOLE_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
 
@@ -25,10 +27,10 @@
         </encoder>
     </appender>
 
-    <root level="INFO">
+    <root level="${ROOT_LOG_LEVEL}">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
     </root>
 
-    <logger name="com.example.bank" level="DEBUG"/>
+    <logger name="com.example.bank" level="${BANK_LOG_LEVEL}"/>
 </configuration>
