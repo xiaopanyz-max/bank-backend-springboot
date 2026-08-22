@@ -1,6 +1,6 @@
 # 银行微服务：全链路部署与 CI/CD 手册
 
-本手册的目标是跑通这条链路：代码提交到 GitHub 后，GitHub Actions 测试并构建镜像；Ubuntu 中的 Kubernetes 运行 Nacos、RocketMQ 和三个业务服务；MySQL 保持部署在 Windows。
+本手册的目标是跑通这条链路：代码提交到应用仓库后，GitHub Actions 测试并构建镜像；随后更新 GitOps 仓库中的 K8S 镜像版本；Argo CD 监听 GitOps 仓库并同步到 Kubernetes；MySQL 保持部署在 Windows。
 
 当前学习环境：
 
@@ -14,9 +14,13 @@
 ## 1. 架构全景
 
 ~~~
-Git 提交
+应用仓库 Git 提交
   ↓
 GitHub Actions：测试 → Docker 构建 → 推送 GHCR
+  ↓
+GitHub Actions：更新 GitOps 仓库 k8s/kustomization.yaml
+  ↓
+Argo CD：监听 GitOps 仓库 → 同步 Kubernetes
   ↓
 Kubernetes：拉取镜像并启动业务服务
   ├── api-gateway：统一入口
@@ -27,7 +31,12 @@ Kubernetes：拉取镜像并启动业务服务
   └── mysql（只是名称映射）→ Windows MySQL
 ~~~
 
-当前 GitHub Actions 已完成 CI。当前 K8S 发布由人工执行 kubectl apply，属于手工 CD。后续用 Argo CD 自动监听 Git 后，才是完整自动 CD。
+当前已拆成两个仓库：
+
+- `bank-backend-springboot`：应用源码、Dockerfile、CI。
+- `bank-backend-gitops`：Kubernetes 清单、环境配置、Argo CD 引导配置。
+
+应用仓库不再保存 `k8s/` 目录；K8S 期望状态统一由 GitOps 仓库管理。
 
 ## 2. 仓库目录
 
@@ -39,9 +48,17 @@ Kubernetes：拉取镜像并启动业务服务
 | .github/workflows/ci.yml | CI 流水线。 |
 | database/schema.sql | bank_dev 的客户库表。 |
 | account-service/database/schema.sql | bank_account 的账户库表。 |
+| argocd/bank-backend-application.yaml | Argo CD Application 引导文件，指向 GitOps 仓库。 |
+
+Kubernetes 清单已经拆到独立仓库：
+
+| GitOps 仓库路径 | 目的 |
+| --- | --- |
 | k8s | 全部 Kubernetes 清单。 |
-| k8s/infra/mysql-external.yaml | Windows MySQL 的 K8S 名称映射，不会创建 MySQL Pod。 |
-| k8s/config/secret.example.yaml | 数据库凭据模板，没有真实密码。 |
+| k8s/apps | customer、account、gateway 的 Deployment 和 Service。 |
+| k8s/config | 公共配置、SIT/UAT/PRD 环境配置、Secret 模板。 |
+| k8s/infra | Windows MySQL 映射、Nacos、RocketMQ。 |
+| k8s/observability | 日志采集配置。 |
 
 ## 3. Kubernetes 基础安装
 
@@ -124,9 +141,9 @@ Pod → mysql:3306 → 192.168.30.1:3306 → 127.0.0.1:3306 → Windows MySQL
 
 在 Windows MySQL Workbench，以 MySQL 管理员账号执行：
 
-1. k8s/infra/mysql-windows-setup.example.sql：创建 bank_k8s 专用账号和两个数据库。
-2. database/schema.sql：创建客户库表。
-3. account-service/database/schema.sql：创建账户库表。
+1. `bank-backend-gitops/k8s/infra/mysql-windows-setup.example.sql`：创建 bank_k8s 专用账号和两个数据库。
+2. `bank-backend-springboot/database/schema.sql`：创建客户库表。
+3. `bank-backend-springboot/account-service/database/schema.sql`：创建账户库表。
 
 目的：每个服务有自己的库，K8S 使用专用账号而不是 root；当前开户经 Feign 同步调用账户服务。
 成功标志：出现 bank_dev、bank_account 和对应表。
@@ -143,7 +160,7 @@ New-NetFirewallRule -DisplayName 'MySQL for VMware K8s' -Direction Inbound -Acti
 目的：只允许 VMware NAT 网段访问 Windows MySQL，不向整个局域网开放。  
 成功标志：执行 netsh interface portproxy show v4tov4 后可以看到 192.168.30.1:3306 的映射。
 
-如果 NAT 网段改变，必须同步修改 k8s/infra/mysql-external.yaml 中的地址。
+如果 NAT 网段改变，必须同步修改 `bank-backend-gitops/k8s/infra/mysql-external.yaml` 中的地址。
 
 ## 5. 网络代理
 
@@ -189,23 +206,23 @@ ghcr.io/xiaopanyz-max/bank-customer-service:latest
 目的：SHA 标签可以精确回滚和追踪；latest 只适合本地学习。  
 成功标志：GitHub Actions 页面全绿，GHCR 中有 customer、account、gateway 三个镜像包。
 
-## 7. CD 第一阶段：手工发布到 K8S
+## 7. CD：GitOps 发布到 K8S
 
-### 7.1 获取清单
+### 7.1 获取 GitOps 清单
 
 在 Ubuntu 执行：
 
 ~~~
 cd ~
-git clone https://github.com/xiaopanyz-max/bank-backend-springboot.git
-cd ~/bank-backend-springboot
+git clone https://github.com/xiaopanyz-max/bank-backend-gitops.git
+cd ~/bank-backend-gitops
 ls k8s
 ~~~
 
-目的：让 Ubuntu 拿到 K8S 部署清单。  
+目的：让 Ubuntu 拿到 GitOps 仓库中的 K8S 部署清单。  
 成功标志：能看到 apps、infra、kustomization.yaml。
 
-此步骤仅用于学习。生产中由 Argo CD 拉取清单，人不需要登录节点执行 git clone。
+此步骤仅用于本地学习或故障排查。正常发布由 Argo CD 拉取 GitOps 仓库，人不需要登录节点执行 git clone。
 
 ### 7.2 创建 Secret
 
@@ -223,13 +240,13 @@ chmod 600 k8s/config/secret.yaml
 如果 Secret 在 Windows 本机生成，可通过 SSH 上传：
 
 ~~~
-scp ./k8s/config/secret.yaml aragon@192.168.30.130:/home/aragon/bank-backend-springboot/k8s/config/secret.yaml
+scp ./k8s/config/secret.yaml aragon@192.168.30.130:/home/aragon/bank-backend-gitops/k8s/config/secret.yaml
 ~~~
 
 ### 7.3 发布所有服务
 
 ~~~
-cd ~/bank-backend-springboot
+cd ~/bank-backend-gitops
 kubectl apply -f k8s/config/secret.yaml
 kubectl apply -k k8s/
 kubectl get pods -n bank -w
@@ -238,7 +255,7 @@ kubectl get pods -n bank -w
 目的：
 
 - 第一条创建数据库密码 Secret。
-- 第二条 Kustomize 一次发布 namespace、ConfigMap、Windows MySQL 名称映射、Nacos、RocketMQ 基础设施、三个业务服务。RocketMQ 当前不参与开户。
+- 第二条 Kustomize 一次发布 namespace、ConfigMap、SIT/UAT/PRD 环境配置、Windows MySQL 名称映射、Nacos、RocketMQ 基础设施、三个业务服务。
 - 第三条持续观察 Pod 状态。
 
 成功标志：bank 命名空间内所有 Pod 为 Running，READY 列等于容器总数。
@@ -283,14 +300,23 @@ Argo CD 发现 Git 变更
 集群状态与 Git 一致
 ~~~
 
-推荐演进顺序：
+当前 Argo CD Application 指向：
 
-1. 先用当前方式手工执行 kubectl apply -k k8s 跑通。
-2. 安装 Argo CD，创建 Application 指向仓库 k8s 目录。
-3. 将镜像从 latest 改为固定 sha-提交号 标签。
-4. CI 更新清单中的镜像标签并提交。
-5. Argo CD 自动同步。
-6. 项目变大后拆分“应用源码仓库”和“环境部署仓库”。
+~~~yaml
+repoURL: https://github.com/xiaopanyz-max/bank-backend-gitops.git
+targetRevision: main
+path: k8s
+~~~
+
+也就是说，Argo CD 不再监听应用源码仓库，而是监听 GitOps 仓库。应用仓库的 Actions 构建镜像后，会用 `GITOPS_REPO_TOKEN` 把新镜像 tag 写入 GitOps 仓库。
+
+验证命令：
+
+~~~
+kubectl get applications -n argocd
+kubectl get deploy -n bank -o custom-columns=SERVICE:.metadata.name,IMAGE:.spec.template.spec.containers[0].image
+kubectl exec -n bank deploy/customer-service -- printenv | grep -E "APP_ENV|SPRING_PROFILES_ACTIVE|LOGGING_LEVEL"
+~~~
 
 ## 10. 日常发布流程
 
@@ -301,8 +327,9 @@ git add / commit / push
   ↓
 GitHub Actions 测试并构建镜像
   ↓
-当前：Ubuntu 中 git pull 后 kubectl apply -k k8s
-后续：Argo CD 自动同步
+GitHub Actions 更新 GitOps 仓库镜像 tag
+  ↓
+Argo CD 自动同步 GitOps 仓库到 K8S
 ~~~
 
 生产环境还需要：多副本、滚动发布、资源限制、监控告警、私有镜像凭据、数据库备份与恢复演练。
