@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <springProperty name="APP_NAME" source="spring.application.name" defaultValue="bank-backend-springboot"/>
+    <springProperty name="APP_NAME" source="spring.application.name" defaultValue="api-gateway"/>
     <springProperty name="APP_ENV" source="app.env" defaultValue="local"/>
     <springProperty name="CLUSTER_NAME" source="cluster.name" defaultValue="local"/>
     <springProperty name="POD_NAME" source="pod.name" defaultValue="local"/>
