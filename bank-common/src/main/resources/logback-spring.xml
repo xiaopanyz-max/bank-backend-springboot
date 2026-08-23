@@ -10,7 +10,7 @@
     <springProperty name="BANK_LOG_LEVEL" source="logging.level.com.example.bank" defaultValue="INFO"/>
 
     <property name="LOG_PATH" value="logs"/>
-    <property name="CONSOLE_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} env=${APP_ENV} cluster=${CLUSTER_NAME} pod=${POD_NAME} podIp=${POD_IP} node=${NODE_NAME} [%thread] %-5level %logger{36} - %msg%n"/>
+    <property name="CONSOLE_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} env=${APP_ENV} cluster=${CLUSTER_NAME} pod=${POD_NAME} podIp=${POD_IP} node=${NODE_NAME} traceId=%X{traceId} globalSerialNo=%X{globalSerialNo} method=%X{httpMethod} path=%X{requestPath} status=%X{httpStatus} costMs=%X{costMs} [%thread] %-5level %logger{36} - %msg%n"/>
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>

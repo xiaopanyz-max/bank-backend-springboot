@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.slf4j.MDC;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -63,6 +64,7 @@ public class IdempotentRequestAspect {
         if (globalSerialNo == null || globalSerialNo.isBlank()) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "全局流水号不能为空");
         }
+        MDC.put("globalSerialNo", globalSerialNo);
         String requestHash = sha256(toJson(request));
 
         RequestRecordStartResult startResult =
