@@ -1,41 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <springProperty name="APP_NAME" source="spring.application.name" defaultValue="bank-backend-springboot"/>
-    <springProperty name="APP_ENV" source="app.env" defaultValue="local"/>
-    <springProperty name="CLUSTER_NAME" source="cluster.name" defaultValue="local"/>
-    <springProperty name="POD_NAME" source="pod.name" defaultValue="local"/>
-    <springProperty name="POD_IP" source="pod.ip" defaultValue="local"/>
-    <springProperty name="NODE_NAME" source="node.name" defaultValue="local"/>
-    <springProperty name="ROOT_LOG_LEVEL" source="logging.level.root" defaultValue="INFO"/>
-    <springProperty name="BANK_LOG_LEVEL" source="logging.level.com.example.bank" defaultValue="INFO"/>
-    <property name="LOG_PATH" value="logs"/>
-    <property name="CONSOLE_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} env=${APP_ENV} cluster=${CLUSTER_NAME} pod=${POD_NAME} podIp=${POD_IP} node=${NODE_NAME} [%thread] %-5level %logger{36} - %msg%n"/>
-
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>${CONSOLE_PATTERN}</pattern>
-            <charset>UTF-8</charset>
-        </encoder>
-    </appender>
-
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/${APP_NAME}.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/${APP_NAME}.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
-            <maxFileSize>20MB</maxFileSize>
-            <maxHistory>30</maxHistory>
-            <totalSizeCap>1GB</totalSizeCap>
-        </rollingPolicy>
-        <encoder>
-            <pattern>${CONSOLE_PATTERN}</pattern>
-            <charset>UTF-8</charset>
-        </encoder>
-    </appender>
-
-    <root level="${ROOT_LOG_LEVEL}">
-        <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="FILE"/>
-    </root>
-
-    <logger name="com.example.bank" level="${BANK_LOG_LEVEL}"/>
+    <include resource="logback/bank-base-logback.xml"/>
 </configuration>

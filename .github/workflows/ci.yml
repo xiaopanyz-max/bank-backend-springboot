@@ -42,6 +42,8 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
+      - name: Install common module
+        run: mvn --batch-mode -f bank-common/pom.xml install
       - name: Run Maven verification
         working-directory: ${{ matrix.directory }}
         run: mvn --batch-mode verify
@@ -65,11 +67,11 @@ jobs:
             dockerfile: Dockerfile
             image: bank-customer-service
           - service: account-service
-            context: account-service
+            context: .
             dockerfile: account-service/Dockerfile
             image: bank-account-service
           - service: api-gateway
-            context: api-gateway
+            context: .
             dockerfile: api-gateway/Dockerfile
             image: bank-api-gateway
     steps:

@@ -36,6 +36,11 @@
     </dependencyManagement>
     <dependencies>
         <dependency>
+            <groupId>com.example.bank</groupId>
+            <artifactId>bank-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-gateway-server-webflux</artifactId>
         </dependency>
