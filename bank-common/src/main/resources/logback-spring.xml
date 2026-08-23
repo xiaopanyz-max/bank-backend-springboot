@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<included>
+<configuration>
     <springProperty name="APP_NAME" source="spring.application.name" defaultValue="bank-service"/>
     <springProperty name="APP_ENV" source="app.env" defaultValue="local"/>
     <springProperty name="CLUSTER_NAME" source="cluster.name" defaultValue="local"/>
@@ -39,4 +39,4 @@
     </root>
 
     <logger name="com.example.bank" level="${BANK_LOG_LEVEL}"/>
-</included>
+</configuration>
