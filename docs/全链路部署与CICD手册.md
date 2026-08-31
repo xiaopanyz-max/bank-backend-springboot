@@ -301,6 +301,47 @@ Windows 网关入口：
 http://192.168.30.130:30080
 ~~~
 
+如果已经同时运行 cluster-a 和 cluster-b，日常联调建议改用本机 nginx 作为唯一入口，而不是直接访问某个集群的 NodePort：
+
+~~~
+http://127.0.0.1:18080
+~~~
+
+nginx 配置由 GitOps 仓库管理：
+
+~~~
+D:\program\workspace\bank-backend-gitops\infra\nginx\nginx.conf
+~~~
+
+当前本机 nginx 的流量路径是：
+
+~~~
+Postman / 浏览器
+  ↓
+127.0.0.1:18080
+  ↓
+本机 nginx
+  ↓
+bank_gateway upstream
+  ├─ cluster-a: 192.168.30.130:30080，weight=3
+  └─ cluster-b: 10.46.132.20:30080，weight=1
+  ↓
+api-gateway
+  ↓
+customer-service / account-service
+~~~
+
+`weight=3` 和 `weight=1` 表示 A:B 约为 3:1，也就是大约 75% 请求到 cluster-a、25% 请求到 cluster-b。nginx 的权重是请求分发权重，不是严格事务百分比；请求量少时分布可能有波动。
+
+配置同步到本机 nginx：
+
+~~~
+cd D:\program\workspace\bank-backend-gitops
+.\infra\nginx\sync-to-local-nginx.ps1
+~~~
+
+脚本会备份本机 nginx 配置、复制 Git 中的 `nginx.conf`、执行 `nginx.exe -t`，最后 reload 或启动 nginx。
+
 ## 8. 第二集群 cluster-b 接入步骤
 
 第二台机器完成 `kubeadm init` 后，先不要急着部署业务，按下面顺序验收基础能力：
