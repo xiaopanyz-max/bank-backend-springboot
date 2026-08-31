@@ -6,7 +6,6 @@ import com.example.bank.common.result.Result;
 import com.example.bank.customer.dto.CustomerCreateDTO;
 import com.example.bank.customer.dto.CustomerPageQueryDTO;
 import com.example.bank.customer.service.CustomerService;
-import com.example.bank.customer.service.impl.CustomerCreateIdempotentResultResolver;
 import com.example.bank.customer.vo.CustomerVO;
 import jakarta.validation.Valid;
 import org.springframework.validation.annotation.Validated;
@@ -24,13 +23,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/customers")
 public class CustomerController {
 
+    private static final String CUSTOMER_CREATE_BUSINESS_TYPE = "CUSTOMER_CREATE";
+
     private final CustomerService customerService;
 
     public CustomerController(CustomerService customerService) {
         this.customerService = customerService;
     }
 
-    @ApsIdempotent(businessType = CustomerCreateIdempotentResultResolver.BUSINESS_TYPE)
+    @ApsIdempotent(businessType = CUSTOMER_CREATE_BUSINESS_TYPE)
     @PostMapping
     public Result<Long> create(@Valid @RequestBody CustomerCreateDTO dto) {
         return Result.success(customerService.create(dto));

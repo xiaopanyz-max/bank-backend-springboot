@@ -3,7 +3,6 @@ package com.example.bank.common.idempotency.aspect;
 import com.example.bank.common.constants.ErrorCode;
 import com.example.bank.common.dto.BaseRequestDTO;
 import com.example.bank.common.exception.BusinessException;
-import com.example.bank.common.idempotency.IdempotentResultResolver;
 import com.example.bank.common.idempotency.RequestRecordStartResult;
 import com.example.bank.common.idempotency.RequestRecordStatus;
 import com.example.bank.common.idempotency.annotation.ApsIdempotent;
@@ -17,11 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.slf4j.MDC;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -35,15 +30,11 @@ public class IdempotentRequestAspect {
 
     private final RequestRecordService requestRecordService;
     private final ObjectMapper objectMapper;
-    private final Map<String, IdempotentResultResolver> resultResolvers;
 
     public IdempotentRequestAspect(RequestRecordService requestRecordService,
-                                   ObjectMapper objectMapper,
-                                   List<IdempotentResultResolver> resultResolvers) {
+                                   ObjectMapper objectMapper) {
         this.requestRecordService = requestRecordService;
         this.objectMapper = objectMapper;
-        this.resultResolvers = resultResolvers.stream()
-                .collect(Collectors.toMap(IdempotentResultResolver::businessType, Function.identity()));
     }
 
     @Around("execution(* com.example.bank..controller..*(..))")
@@ -70,7 +61,7 @@ public class IdempotentRequestAspect {
         RequestRecordStartResult startResult =
                 requestRecordService.start(apsIdempotent.businessType(), globalSerialNo, requestHash);
         if (!startResult.firstRequest()) {
-            Object duplicatedResult = resolveDuplicatedResult(apsIdempotent.businessType(), startResult.record());
+            Object duplicatedResult = resolveDuplicatedResult(startResult.record());
             return adaptControllerReturn(joinPoint, duplicatedResult);
         }
 
@@ -115,15 +106,11 @@ public class IdempotentRequestAspect {
         return Optional.empty();
     }
 
-    private Object resolveDuplicatedResult(String businessType, RequestRecordEntity record) {
+    private Object resolveDuplicatedResult(RequestRecordEntity record) {
         if (RequestRecordStatus.PROCESSING.equals(record.getStatus())) {
             throw new BusinessException(ErrorCode.CONFLICT, "请求正在处理中，请勿重复提交");
         }
-        IdempotentResultResolver resolver = resultResolvers.get(businessType);
-        if (resolver == null) {
-            throw new BusinessException(ErrorCode.CONFLICT, "请求已处理，请勿重复提交");
-        }
-        return resolver.resolve(record);
+        throw new BusinessException(ErrorCode.CONFLICT, "请求已处理，请勿重复提交");
     }
 
     private Object adaptControllerReturn(ProceedingJoinPoint joinPoint, Object duplicatedResult) {
