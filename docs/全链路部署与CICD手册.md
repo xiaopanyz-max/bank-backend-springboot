@@ -18,7 +18,7 @@
   ↓
 GitHub Actions：测试 → Docker 构建 → 推送 GHCR
   ↓
-GitHub Actions：更新 GitOps 仓库 k8s/kustomization.yaml
+GitHub Actions：更新 GitOps 仓库中所有带镜像 tag 的 kustomization.yaml
   ↓
 Argo CD：监听 GitOps 仓库 → 同步 Kubernetes
   ↓
@@ -493,7 +493,7 @@ targetRevision: main
 path: k8s
 ~~~
 
-也就是说，Argo CD 不再监听应用源码仓库，而是监听 GitOps 仓库。应用仓库的 Actions 构建镜像后，会用 `GITOPS_REPO_TOKEN` 把新镜像 tag 写入 GitOps 仓库。
+也就是说，Argo CD 不再监听应用源码仓库，而是监听 GitOps 仓库。应用仓库的 Actions 构建镜像后，会用 `GITOPS_REPO_TOKEN` 把新镜像 tag 写入 GitOps 仓库中所有带 `newTag` 的 `kustomization.yaml`。这是为了兼容两种 Application 指向方式：cluster-a 可以指向根目录 `k8s`，cluster-b 可以直接指向 `k8s/overlays/sit-cluster-b`。
 
 验证命令：
 
