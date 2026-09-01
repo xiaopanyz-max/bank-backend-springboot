@@ -323,7 +323,7 @@ Postman / 浏览器
 本机 nginx
   ↓
 bank_gateway upstream
-  ├─ cluster-a: 192.168.30.130:30080，weight=3
+  ├─ cluster-a: 192.168.30.130:30080，weight=9
   └─ cluster-b: 10.46.132.20:30080，weight=1
   ↓
 api-gateway
@@ -331,7 +331,7 @@ api-gateway
 customer-service / account-service
 ~~~
 
-`weight=3` 和 `weight=1` 表示 A:B 约为 3:1，也就是大约 75% 请求到 cluster-a、25% 请求到 cluster-b。nginx 的权重是请求分发权重，不是严格事务百分比；请求量少时分布可能有波动。
+`weight=9` 和 `weight=1` 表示 A:B 约为 9:1，也就是大约 90% 请求到 cluster-a、10% 请求到 cluster-b。nginx 的权重是请求分发权重，不是严格事务百分比；请求量少时分布可能有波动。
 
 配置同步到本机 nginx：
 
