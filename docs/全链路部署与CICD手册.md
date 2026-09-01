@@ -342,6 +342,19 @@ cd D:\program\workspace\bank-backend-gitops
 
 脚本会备份本机 nginx 配置、复制 Git 中的 `nginx.conf`、执行 `nginx.exe -t`，最后 reload 或启动 nginx。
 
+真正做灰度时，cluster-a 保持旧稳定镜像，cluster-b 部署新镜像。应用仓库 CI 的规则是：
+
+- `main` 分支普通提交：只更新 GitOps 仓库 `k8s/overlays/sit-cluster-b/kustomization.yaml`，让新版本先进入 cluster-b。
+- Release、版本 tag 或带 `release_tag` 的手动发布：更新所有 `kustomization.yaml`，把灰度版本提升为全量版本。
+
+查询接口用于灰度区分。cluster-b 的 `bank-env-config` 中配置 `GRAY_RELEASE` 后，访问查询接口会输出类似日志：
+
+~~~
+GRAY_QUERY release=customer-query-gray-v1 api=detail id=2094431171369283585
+~~~
+
+这条日志只用于灰度观测，不改变接口返回值，不影响开户交易和幂等逻辑。结合公共请求日志中的 `cluster=bank-sit-a` / `cluster=bank-sit-b`，可以确认请求经过 nginx 后实际落到了哪个集群、哪个版本。
+
 ## 8. 第二集群 cluster-b 接入步骤
 
 第二台机器完成 `kubeadm init` 后，先不要急着部署业务，按下面顺序验收基础能力：

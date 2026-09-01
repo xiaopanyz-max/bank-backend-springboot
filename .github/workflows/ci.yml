@@ -123,7 +123,15 @@ jobs:
         env:
           IMAGE_TAG: ${{ (github.event_name == 'release' && github.event.release.tag_name) || (github.event_name == 'workflow_dispatch' && inputs.release_tag) || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && github.ref_name) || format('sha-{0}', github.sha) }}
         run: |
-          files=$(find k8s -name kustomization.yaml -print)
+          if [ "${GITHUB_EVENT_NAME}" = "push" ] && [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+            # Main branch pushes are canary deployments: update cluster-b only.
+            # cluster-a stays on the previous stable tag until a release/tag promotes
+            # the same version to every kustomization.
+            files="k8s/overlays/sit-cluster-b/kustomization.yaml"
+          else
+            # Releases, version tags and manual release_tag runs promote to all entries.
+            files=$(find k8s -name kustomization.yaml -print)
+          fi
           for file in ${files}; do
             if grep -q "newTag:" "${file}"; then
               sed -i -E "s#(newTag: ).*#\\1${IMAGE_TAG}#" "${file}"

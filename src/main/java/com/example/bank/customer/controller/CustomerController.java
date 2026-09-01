@@ -8,6 +8,9 @@ import com.example.bank.customer.dto.CustomerPageQueryDTO;
 import com.example.bank.customer.service.CustomerService;
 import com.example.bank.customer.vo.CustomerVO;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,11 +26,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/customers")
 public class CustomerController {
 
+    private static final Logger log = LoggerFactory.getLogger(CustomerController.class);
+
     private static final String CUSTOMER_CREATE_BUSINESS_TYPE = "CUSTOMER_CREATE";
 
+    private final String grayRelease;
     private final CustomerService customerService;
 
-    public CustomerController(CustomerService customerService) {
+    public CustomerController(@Value("${GRAY_RELEASE:}") String grayRelease,
+                              CustomerService customerService) {
+        this.grayRelease = grayRelease;
         this.customerService = customerService;
     }
 
@@ -39,6 +47,7 @@ public class CustomerController {
 
     @GetMapping("/{id}")
     public Result<CustomerVO> detail(@PathVariable("id") Long id) {
+        logGrayQuery("detail", "id=" + id);
         return Result.success(customerService.detail(id));
     }
 
@@ -51,6 +60,15 @@ public class CustomerController {
 
     @PostMapping("/page")
     public Result<PageResult<CustomerVO>> page(@Valid @RequestBody CustomerPageQueryDTO query) {
+        logGrayQuery("page", "keyword=" + query.getKeyword() + " pageNo=" + query.getPageNo()
+                + " pageSize=" + query.getPageSize());
         return Result.success(customerService.page(query));
+    }
+
+    private void logGrayQuery(String api, String query) {
+        if (grayRelease == null || grayRelease.isBlank()) {
+            return;
+        }
+        log.info("GRAY_QUERY release={} api={} {}", grayRelease, api, query);
     }
 }
